@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?><process version="8.1.000">
+  <context>
+    <input/>
+    <output/>
+    <macros/>
+  </context>
+  <operator activated="true" class="process" compatibility="8.1.000" expanded="true" name="Process">
+    <parameter key="logverbosity" value="init"/>
+    <parameter key="random_seed" value="2001"/>
+    <parameter key="send_mail" value="never"/>
+    <parameter key="notification_email" value=""/>
+    <parameter key="process_duration_for_mail" value="30"/>
+    <parameter key="encoding" value="SYSTEM"/>
+    <process expanded="true">
+      <operator activated="true" class="text:read_document" compatibility="8.1.000" expanded="true" height="68" name="Read Document" width="90" x="45" y="85">
+        <parameter key="file" value="C:\Users\Felix\Desktop\Neues Textdokument.txt"/>
+        <parameter key="extract_text_only" value="true"/>
+        <parameter key="use_file_extension_as_type" value="true"/>
+        <parameter key="content_type" value="txt"/>
+        <parameter key="encoding" value="SYSTEM"/>
+      </operator>
+      <operator activated="true" class="text:cut_document" compatibility="8.1.000" expanded="true" height="68" name="Cut Document" width="90" x="246" y="85">
+        <parameter key="query_type" value="Regular Expression"/>
+        <list key="string_machting_queries"/>
+        <parameter key="attribute_type" value="Nominal"/>
+        <list key="regular_expression_queries">
+          <parameter key="content" value="(\{(.*?)\})"/>
+        </list>
+        <list key="regular_region_queries"/>
+        <list key="xpath_queries"/>
+        <list key="namespaces"/>
+        <parameter key="ignore_CDATA" value="true"/>
+        <parameter key="assume_html" value="true"/>
+        <list key="index_queries"/>
+        <list key="jsonpath_queries">
+          <parameter key="content" value="$."/>
+        </list>
+        <process expanded="true">
+          <connect from_port="segment" to_port="document 1"/>
+          <portSpacing port="source_segment" spacing="0"/>
+          <portSpacing port="sink_document 1" spacing="0"/>
+          <portSpacing port="sink_document 2" spacing="0"/>
+        </process>
+      </operator>
+      <operator activated="true" class="text:json_to_data" compatibility="8.1.000" expanded="true" height="82" name="JSON To Data" width="90" x="380" y="187">
+        <parameter key="ignore_arrays" value="false"/>
+        <parameter key="limit_attributes" value="false"/>
+        <parameter key="skip_invalid_documents" value="false"/>
+        <parameter key="guess_data_types" value="true"/>
+        <parameter key="keep_missing_attributes" value="false"/>
+        <parameter key="missing_values_aliases" value=", null, NaN, missing"/>
+      </operator>
+      <connect from_op="Read Document" from_port="output" to_op="Cut Document" to_port="document"/>
+      <connect from_op="Cut Document" from_port="documents" to_op="JSON To Data" to_port="documents 1"/>
+      <connect from_op="JSON To Data" from_port="example set" to_port="result 1"/>
+      <portSpacing port="source_input 1" spacing="0"/>
+      <portSpacing port="sink_result 1" spacing="0"/>
+      <portSpacing port="sink_result 2" spacing="0"/>
+    </process>
+  </operator>
+</process>
