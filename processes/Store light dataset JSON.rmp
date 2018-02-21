@@ -20,7 +20,7 @@
         <parameter key="encoding" value="SYSTEM"/>
       </operator>
       <operator activated="true" class="store" compatibility="8.1.000" expanded="true" height="68" name="Store" width="90" x="179" y="34">
-        <parameter key="repository_entry" value="../data/Light dataset JSON"/>
+        <parameter key="repository_entry" value="../data/Light dataset/JSON Document"/>
       </operator>
       <connect from_op="Read Document" from_port="output" to_op="Store" to_port="input"/>
       <portSpacing port="source_input 1" spacing="0"/>
