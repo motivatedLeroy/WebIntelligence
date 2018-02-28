@@ -13,7 +13,7 @@
     <parameter key="encoding" value="SYSTEM"/>
     <process expanded="true">
       <operator activated="true" class="text:read_document" compatibility="8.1.000" expanded="true" height="68" name="Read Document" width="90" x="45" y="34">
-        <parameter key="file" value="/home/vpuselja/NTNU/TDT4125/Project/dataComposed.txt"/>
+        <parameter key="file" value=""/>
         <parameter key="extract_text_only" value="true"/>
         <parameter key="use_file_extension_as_type" value="true"/>
         <parameter key="content_type" value="txt"/>
