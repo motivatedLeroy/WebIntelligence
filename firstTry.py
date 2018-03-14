@@ -42,7 +42,7 @@ print(datetime.datetime.now())
 print(datetime.datetime.now()-time1)
 
 reader = Reader(line_format='user item rating', sep='   ')
-data = Dataset.load_from_file('dataset1.txt', reader=reader)
+data = Dataset.load_from_file('dataset_file', reader=reader)
 algo = SVD()
 kf = KFold()
 
