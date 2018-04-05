@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from surprise import Dataset
 from surprise import Reader
 from surprise import SVD
