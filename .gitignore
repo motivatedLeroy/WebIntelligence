@@ -1,4 +1,11 @@
-one_week
-**/data/Light dataset/**
+# editor files
 *~
+
+# light dataset directoy
+/one_week
+
+# rapid miner imported light dataset
+/Analysis/Repository/data/Light dataset/**
+
+# preprocess.py output
 dataset.txt
