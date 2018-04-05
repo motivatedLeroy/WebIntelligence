@@ -10,7 +10,7 @@
 /Analysis/Repository/data/Light dataset/**
 
 # preprocess.py output
-dataset.txt
+/collaborative.csv
 
 # results
 /results

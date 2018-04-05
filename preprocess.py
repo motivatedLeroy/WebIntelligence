@@ -2,10 +2,10 @@
 
 import json
 
-input_file = 'one_week/20170102'
-output_file = 'dataset.txt'
+raw_dataset = 'one_week/20170102'
+collaborative = 'collaborative.csv'
 
-with open(input_file) as fin, open(output_file, 'w') as fout:
+with open(raw_dataset) as fin, open(collaborative, 'w') as fcoll:
     for line in fin:
         obj = json.loads(line.strip())
         is_news_article = 'id' in obj
@@ -22,6 +22,6 @@ with open(input_file) as fin, open(output_file, 'w') as fout:
             continue # TODO: consider default active time
 
         active_time = obj['activeTime']
-        print('\t'.join([uid, iid, str(active_time)]), file=fout)
+        print('\t'.join([uid, iid, str(active_time)]), file=fcoll)
 
         # TODO: print progress
