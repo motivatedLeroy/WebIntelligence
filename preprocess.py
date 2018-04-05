@@ -10,7 +10,8 @@ with open(output_fname, 'w') as f:
     for line in open(input_file):
         obj = json.loads(line.strip())
         try:
-            uid, iid, activeTime = obj['userId'], obj['id'], str(obj['activeTime'])        except Exception as e:
+            uid, iid, activeTime = obj['userId'], obj['id'], str(obj['activeTime'])
+        except Exception as e:
             continue
         print('\t'.join([uid, iid, activeTime]), file=f)
         count += 1
