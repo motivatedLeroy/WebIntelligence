@@ -11,3 +11,6 @@
 
 # preprocess.py output
 dataset.txt
+
+# results
+/results
