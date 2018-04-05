@@ -8,7 +8,13 @@ content = 'content.csv'
 
 with open(raw_dataset) as fin, open(collaborative, 'w') as fcoll, open(
         content, 'w') as fcont:
+    print()
+
+    count = 0
     for line in fin:
+        count += 1
+        print('preprocessing: {} line(s) read.'.format(count), end='\r')
+
         obj = json.loads(line.strip())
         is_news_article = 'id' in obj
         if not is_news_article:
@@ -29,4 +35,4 @@ with open(raw_dataset) as fin, open(collaborative, 'w') as fcoll, open(
             keywords = obj['keywords']
             print('\t'.join([uid, iid, keywords]), file=fcont)
 
-        # TODO: print progress
+    print()
