@@ -1,5 +1,7 @@
-# editor files
+# -*- mode: gitignore; -*-
 *~
+\#*\#
+.\#*
 
 # light dataset directoy
 /one_week
