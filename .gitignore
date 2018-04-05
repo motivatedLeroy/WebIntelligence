@@ -11,6 +11,7 @@
 
 # preprocess.py output
 /collaborative.csv
+/content.csv
 
 # results
 /results
