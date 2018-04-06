@@ -11,6 +11,8 @@ with open(raw_dataset) as fin, open(collaborative, 'w') as fcoll, open(
     print()
 
     count = 0
+    sessions_count = {}
+    sessions = {}
     for line in fin:
         count += 1
         print('preprocessing: {} line(s) read.'.format(count), end='\r')
@@ -20,10 +22,28 @@ with open(raw_dataset) as fin, open(collaborative, 'w') as fcoll, open(
         if not is_news_article:
             continue # no usable information
 
-        uid, iid = obj['userId'], obj['id']
+        uid, iid, eid = obj['userId'], obj['id'], obj['eventId']
         subscribed = 'pluss' in obj['url']
         if not subscribed:
-            continue # TODO: extract sessions for unsubscribed users
+            start, stop = obj['sessionStart'], obj['sessionStop']
+            if not start and uid not in sessions:
+                #print('warning: session not initialized [eid:{}]'.format(eid))
+                start = True
+
+            if start:
+                sessions_count[uid] = sessions_count.get(uid, 0) + 1
+                sid = uid + '#' + str(sessions_count[uid])
+                #if uid in sessions:
+                #    print('warning: session not terminated [eid:{}, c:{}]'.
+                #          format(eid, sessions_count[uid] - 1))
+                sessions[uid] = sid
+            else:
+                sid = sessions[uid]
+
+            if stop:
+                del sessions[uid]
+
+            uid = sid
 
         active_time_recorded = 'activeTime' in obj
         if active_time_recorded: # TODO: consider default active time
