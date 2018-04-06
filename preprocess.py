@@ -9,6 +9,7 @@ collaborative = 'collaborative.csv'
 content = 'content.csv'
 
 max_print_count = int(argv[1]) if len(argv) > 1 else None
+max_scan_count = max_print_count * 10 if max_print_count is not None else None
 
 def scan_line(line, subscribed_users):
     obj = json.loads(line.strip())
@@ -50,23 +51,32 @@ def parse_line(line, subscribed_users, sessions_count, sessions):
 
     return event
 
-print('\n1st pass: scanning for subscribed users')
+print('\n1st pass: scanning for subscribed users (limit:{})'.format(
+    max_scan_count))
 subscribed_users = set()
+
+max_reached = False
 
 read_count = 0
 for raw_dataset in raw_datasets:
     print('scanning: {}'.format(raw_dataset).ljust(80))
     with open(raw_dataset) as fin:
         for line in fin:
+            if max_scan_count is not None and read_count == max_scan_count:
+                max_reached = True
+                break
+
             scan_line(line, subscribed_users)
 
             read_count += 1
             print('scanning: {} line(s) read, {} subscribed users found.'.
                   format(read_count, len(subscribed_users)), end='\r')
+    if max_reached:
+        break
 
 print()
 
-print('\n2nd pass: preprocessing')
+print('\n2nd pass: preprocessing (limit:{})'.format(max_print_count))
 sessions_count = {}
 sessions = {}
 
