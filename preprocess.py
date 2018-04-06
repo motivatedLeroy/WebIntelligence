@@ -9,7 +9,14 @@ content = 'content.csv'
 
 max_print_count = int(argv[1]) if len(argv) > 1 else None
 
-def parse_line(line, sessions_count, sessions):
+def scan_line(line, subscribed_users):
+    obj = json.loads(line.strip())
+
+    uid = obj['userId']
+    if uid not in subscribed_users and 'pluss' in obj['url']:
+        subscribed_users.add(uid)
+
+def parse_line(line, subscribed_users, sessions_count, sessions):
     obj = json.loads(line.strip())
 
     is_news_article = 'id' in obj
@@ -20,8 +27,8 @@ def parse_line(line, sessions_count, sessions):
     event = { 'iid': iid }
 
     uid, eid = obj['userId'], obj['eventId']
-    is_subscribed = 'pluss' in obj['url']
-    if is_subscribed:
+
+    if uid in subscribed_users:
         event['uid'] = uid
     else:
         start, stop = obj['sessionStart'], obj['sessionStop']
@@ -51,6 +58,8 @@ def parse_line(line, sessions_count, sessions):
 
 with open(raw_dataset) as fin, open(collaborative, 'w') as fcoll, open(
         content, 'w') as fcont:
+    subscribed_users = set()
+
     sessions_count = {}
     sessions = {}
 
@@ -59,7 +68,18 @@ with open(raw_dataset) as fin, open(collaborative, 'w') as fcoll, open(
 
     read_count = 0
 
+    print('\n1st pass: scanning for subscribed users')
+    for line in fin:
+        scan_line(line, subscribed_users)
+
+        print('preprocessing: {} line(s) read, {} subscribed users found.'.
+              format(read_count, len(subscribed_users)), end='\r')
+        read_count += 1
     print()
+    fin.seek(0)
+    read_count = 0
+
+    print('\n2nd pass: preprocessing')
     print('user\titem\trating', file=fcoll)
     print('user\titem\tcontent', file=fcont)
     for line in fin:
@@ -67,7 +87,7 @@ with open(raw_dataset) as fin, open(collaborative, 'w') as fcoll, open(
             and print_coll_count == print_cont_count == max_print_count):
             break
 
-        event = parse_line(line, sessions_count, sessions)
+        event = parse_line(line, subscribed_users, sessions_count, sessions)
         if event is not None:
             iid, uid = event['iid'], event['uid']
             active_time, keywords = event['active_time'], event['keywords']
