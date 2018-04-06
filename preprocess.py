@@ -32,16 +32,9 @@ def parse_line(line, subscribed_users, sessions_count, sessions):
         event['uid'] = uid
     else:
         start, stop = obj['sessionStart'], obj['sessionStop']
-        if not start and uid not in sessions:
-            #print('warning: session not initialized [eid:{}]'.format(eid))
-            start = True
-
-        if start:
+        if start or uid not in sessions:
             sessions_count[uid] = sessions_count.get(uid, 0) + 1
             sid = uid + '#' + str(sessions_count[uid])
-            #if uid in sessions:
-            #    print('warning: session not terminated [eid:{}, c:{}]'.
-            #          format(eid, sessions_count[uid] - 1))
             sessions[uid] = sid
         else:
             sid = sessions[uid]
