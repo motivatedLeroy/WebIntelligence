@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
+import glob
 import json
 from sys import argv
 
-raw_dataset = 'one_week/20170102'
+raw_datasets = sorted(glob.glob('one_week/*'))
 collaborative = 'collaborative.csv'
 content = 'content.csv'
 
@@ -49,55 +50,67 @@ def parse_line(line, subscribed_users, sessions_count, sessions):
 
     return event
 
-subscribed_users = set()
 print('\n1st pass: scanning for subscribed users')
-with open(raw_dataset) as fin:
-    read_count = 0
+subscribed_users = set()
 
-    for line in fin:
-        scan_line(line, subscribed_users)
+read_count = 0
+for raw_dataset in raw_datasets:
+    print('scanning: {}'.format(raw_dataset).ljust(80))
+    with open(raw_dataset) as fin:
+        for line in fin:
+            scan_line(line, subscribed_users)
 
-        print('preprocessing: {} line(s) read, {} subscribed users found.'.
-              format(read_count, len(subscribed_users)), end='\r')
-        read_count += 1
+            read_count += 1
+            print('scanning: {} line(s) read, {} subscribed users found.'.
+                  format(read_count, len(subscribed_users)), end='\r')
+
 print()
 
+print('\n2nd pass: preprocessing')
 sessions_count = {}
 sessions = {}
-print('\n2nd pass: preprocessing')
-with open(raw_dataset) as fin, open(collaborative, 'w') as fcoll, open(
-        content, 'w') as fcont:
-    print_coll_count = 0
-    print_cont_count = 0
 
-    read_count = 0
+max_reached = False
+print_coll_count = 0
+print_cont_count = 0
 
+read_count = 0
+with open(collaborative, 'w') as fcoll, open(content, 'w') as fcont:
     print('user\titem\trating', file=fcoll)
     print('user\titem\tcontent', file=fcont)
-    for line in fin:
-        if (max_print_count is not None
-            and print_coll_count == print_cont_count == max_print_count):
+    for raw_dataset in raw_datasets:
+        print('preprocessing: {}'.format(raw_dataset).ljust(80))
+        with open(raw_dataset) as fin:
+            for line in fin:
+                if (max_print_count is not None and max_print_count
+                    == print_coll_count == print_cont_count):
+                    max_reached = True
+                    break
+
+                event = parse_line(line, subscribed_users, sessions_count,
+                                   sessions)
+                if event is not None:
+                    iid, uid = event['iid'], event['uid']
+                    active_time = event['active_time']
+                    keywords = event['keywords']
+
+                    if (active_time is not None
+                        and (max_print_count is None
+                             or print_coll_count < max_print_count)):
+                        print('\t'.join([uid, iid, str(active_time)]),
+                              file=fcoll)
+                        print_coll_count += 1
+
+                    if (keywords is not None
+                        and (max_print_count is None
+                             or print_cont_count < max_print_count)):
+                        print('\t'.join([uid, iid, keywords]), file=fcont)
+                        print_cont_count += 1
+
+                read_count += 1
+                print('preprocessing: {} line(s) read, {}@coll, {}@cont written.'.
+                      format(read_count, print_coll_count, print_cont_count),
+                      end='\r')
+        if max_reached:
             break
-
-        event = parse_line(line, subscribed_users, sessions_count, sessions)
-        if event is not None:
-            iid, uid = event['iid'], event['uid']
-            active_time, keywords = event['active_time'], event['keywords']
-
-            if (active_time is not None
-                and (max_print_count is None
-                     or print_coll_count < max_print_count)):
-                print('\t'.join([uid, iid, str(active_time)]), file=fcoll)
-                print_coll_count += 1
-
-            if (keywords is not None
-                and (max_print_count is None
-                     or print_cont_count < max_print_count)):
-                print('\t'.join([uid, iid, keywords]), file=fcont)
-                print_cont_count += 1
-
-        read_count += 1
-        print('preprocessing: {} line(s) read, {}@coll, {}@cont written.'.
-              format(read_count, print_coll_count, print_cont_count), end='\r')
-
-print()
+    print()
