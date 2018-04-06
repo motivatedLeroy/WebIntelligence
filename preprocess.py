@@ -51,11 +51,13 @@ def parse_line(line, sessions_count, sessions):
 
 with open(raw_dataset) as fin, open(collaborative, 'w') as fcoll, open(
         content, 'w') as fcont:
-    read_count = 0
-    print_coll_count = 0
-    print_cont_count = 0
     sessions_count = {}
     sessions = {}
+
+    print_coll_count = 0
+    print_cont_count = 0
+
+    read_count = 0
 
     print()
     print('user\titem\trating', file=fcoll)
