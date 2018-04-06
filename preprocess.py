@@ -49,30 +49,29 @@ def parse_line(line, subscribed_users, sessions_count, sessions):
 
     return event
 
-with open(raw_dataset) as fin, open(collaborative, 'w') as fcoll, open(
-        content, 'w') as fcont:
-    subscribed_users = set()
-
-    sessions_count = {}
-    sessions = {}
-
-    print_coll_count = 0
-    print_cont_count = 0
-
+subscribed_users = set()
+print('\n1st pass: scanning for subscribed users')
+with open(raw_dataset) as fin:
     read_count = 0
 
-    print('\n1st pass: scanning for subscribed users')
     for line in fin:
         scan_line(line, subscribed_users)
 
         print('preprocessing: {} line(s) read, {} subscribed users found.'.
               format(read_count, len(subscribed_users)), end='\r')
         read_count += 1
-    print()
-    fin.seek(0)
+print()
+
+sessions_count = {}
+sessions = {}
+print('\n2nd pass: preprocessing')
+with open(raw_dataset) as fin, open(collaborative, 'w') as fcoll, open(
+        content, 'w') as fcont:
+    print_coll_count = 0
+    print_cont_count = 0
+
     read_count = 0
 
-    print('\n2nd pass: preprocessing')
     print('user\titem\trating', file=fcoll)
     print('user\titem\tcontent', file=fcont)
     for line in fin:
@@ -101,4 +100,4 @@ with open(raw_dataset) as fin, open(collaborative, 'w') as fcoll, open(
         print('preprocessing: {} line(s) read, {}@coll, {}@cont written.'.
               format(read_count, print_coll_count, print_cont_count), end='\r')
 
-    print()
+print()
