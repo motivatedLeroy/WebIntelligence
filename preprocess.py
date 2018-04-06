@@ -8,11 +8,13 @@ content = 'content.csv'
 
 with open(raw_dataset) as fin, open(collaborative, 'w') as fcoll, open(
         content, 'w') as fcont:
-    print()
-
     count = 0
     sessions_count = {}
     sessions = {}
+
+    print()
+    print('user\titem\trating', file=fcoll)
+    print('user\titem\tcontent', file=fcont)
     for line in fin:
         count += 1
         print('preprocessing: {} line(s) read.'.format(count), end='\r')

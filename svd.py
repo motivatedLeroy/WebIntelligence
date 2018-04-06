@@ -8,7 +8,7 @@ from surprise.model_selection import KFold
 
 dataset_file = 'collaborative.csv'
 
-reader = Reader(line_format='user item rating', sep='\t')
+reader = Reader(line_format='user item rating', sep='\t', skip_lines=1)
 data = Dataset.load_from_file(dataset_file, reader=reader)
 algo = SVD()
 kf = KFold(n_splits=10)
