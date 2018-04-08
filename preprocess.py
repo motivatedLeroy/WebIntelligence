@@ -73,7 +73,6 @@ for raw_dataset in raw_datasets:
                   format(read_count, len(subscribed_users)), end='\r')
     if max_reached:
         break
-
 print()
 
 print('\n2nd pass: preprocessing (limit:{})'.format(max_print_count))
