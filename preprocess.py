@@ -42,7 +42,7 @@ def parse_line(line, subscribed_users, active_time_scale, sessions_count,
     if not is_news_article:
         return None
 
-    iid = obj['userId']
+    iid = obj['id']
     event = { 'iid': iid }
 
     uid, eid = obj['userId'], obj['eventId']
