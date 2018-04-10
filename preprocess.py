@@ -71,8 +71,8 @@ with open(train_data) as fin:
         if uid not in subscribed_users and 'pluss' in obj['url']:
             subscribed_users.add(uid)
 
-        if 'activeTime' in obj:
-            active_time = obj['activeTime']
+        active_time = obj.get('activeTime', None)
+        if active_time is not None:
             min_active_time = active_time_scale.get('min', active_time)
             max_active_time = active_time_scale.get('max', active_time)
             active_time_scale['min'] = min(min_active_time, active_time)
