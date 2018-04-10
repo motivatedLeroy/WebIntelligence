@@ -6,6 +6,9 @@
 # light dataset directory
 /one_week
 
+# test dataset
+/test_one_week
+
 # rapid miner imported light dataset
 /Analysis/Repository/data/Light dataset/**
 
