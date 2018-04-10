@@ -72,8 +72,7 @@ def parse_line(line, subscribed_users, active_time_scale, sessions_count,
 
     return event
 
-print('\n1st pass: scanning (limit:{})'.format(
-    max_scan_count))
+print('\n1st pass: scanning (limit:{})'.format(max_scan_count))
 subscribed_users = set()
 active_time_scale = {}
 
