@@ -20,13 +20,11 @@ def scan_line(line, subscribed_users, active_time_scale):
         subscribed_users.add(uid)
 
     if 'activeTime' in obj:
+        min_active_time = active_time_scale.get('min', active_time)
+        max_active_time = active_time_scale.get('max', active_time)
         active_time = obj['activeTime']
-        if ('min' not in active_time_scale
-            or active_time < active_time_scale['min']):
-            active_time_scale['min'] = active_time
-        if ('max' not in active_time_scale
-            or active_time > active_time_scale['max']):
-            active_time_scale['max'] = active_time
+        active_time_scale['min'] = min(min_active_time, active_time)
+        active_time_scale['max'] = max(max_active_time, active_time)
 
 def normalize(value, source_scale, target_scale):
     return (target_scale['min'] + (value - source_scale['min'])
