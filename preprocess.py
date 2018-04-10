@@ -10,8 +10,7 @@ content = 'content.csv'
 
 rating_scale = { 'min': 1, 'max': 5 }
 
-max_print_count = int(argv[1]) if len(argv) > 1 else None
-max_scan_count = max_print_count * 10 if max_print_count is not None else None
+max_lines = int(argv[1]) if len(argv) > 1 else None
 
 def scan_line(line, subscribed_users, active_time_scale):
     obj = json.loads(line.strip())
@@ -72,38 +71,37 @@ def parse_line(line, subscribed_users, active_time_scale, sessions_count,
 
     return event
 
-print('\n1st pass: scanning (limit:{})'.format(max_scan_count))
+print('\n1st pass: scanning (limit:{})'.format(max_lines))
 subscribed_users = set()
 active_time_scale = {}
 
-read_count = 0
+lines_count = 0
 with open(train_data) as fin:
     for line in fin:
-        if max_scan_count is not None and read_count == max_scan_count:
+        if max_lines is not None and lines_count == max_lines:
             break
 
         scan_line(line, subscribed_users, active_time_scale)
 
-        read_count += 1
+        lines_count += 1
         print('scanning: {} line(s) read, {} subscribed users found.'.
-              format(read_count, len(subscribed_users)), end='\r')
+              format(lines_count, len(subscribed_users)), end='\r')
 print()
 
-print('\n2nd pass: preprocessing (limit:{})'.format(max_print_count))
+print('\n2nd pass: preprocessing (limit:{})'.format(max_lines))
 sessions_count = {}
 sessions = {}
 
 print_coll_count = 0
 print_cont_count = 0
 
-read_count = 0
+lines_count = 0
 with open(train_data) as fin, open(collaborative, 'w') as fcoll, open(
         content, 'w') as fcont:
     print('user\titem\trating', file=fcoll)
     print('user\titem\tcontent', file=fcont)
     for line in fin:
-        if (max_print_count is not None and max_print_count
-            == print_coll_count == print_cont_count):
+        if (max_lines is not None and max_lines == lines_count):
             break
 
         event = parse_line(line, subscribed_users, active_time_scale,
@@ -113,19 +111,15 @@ with open(train_data) as fin, open(collaborative, 'w') as fcoll, open(
             active_time = event['active_time']
             keywords = event['keywords']
 
-            if (active_time is not None
-                and (max_print_count is None
-                     or print_coll_count < max_print_count)):
+            if (active_time is not None):
                 print('\t'.join([uid, iid, str(active_time)]), file=fcoll)
                 print_coll_count += 1
 
-            if (keywords is not None
-                and (max_print_count is None
-                     or print_cont_count < max_print_count)):
+            if (keywords is not None):
                 print('\t'.join([uid, iid, keywords]), file=fcont)
                 print_cont_count += 1
 
-        read_count += 1
+        lines_count += 1
         print('preprocessing: {} line(s) read, {}@coll, {}@cont written.'.
-              format(read_count, print_coll_count, print_cont_count), end='\r')
+              format(lines_count, print_coll_count, print_cont_count), end='\r')
     print()
