@@ -12,20 +12,6 @@ rating_scale = { 'min': 1, 'max': 5 }
 
 max_lines = int(argv[1]) if len(argv) > 1 else None
 
-def scan_line(line, subscribed_users, active_time_scale):
-    obj = json.loads(line.strip())
-
-    uid = obj['userId']
-    if uid not in subscribed_users and 'pluss' in obj['url']:
-        subscribed_users.add(uid)
-
-    if 'activeTime' in obj:
-        min_active_time = active_time_scale.get('min', active_time)
-        max_active_time = active_time_scale.get('max', active_time)
-        active_time = obj['activeTime']
-        active_time_scale['min'] = min(min_active_time, active_time)
-        active_time_scale['max'] = max(max_active_time, active_time)
-
 def normalize(value, source_scale, target_scale):
     return (target_scale['min'] + (value - source_scale['min'])
             * (target_scale['max'] - target_scale['min'])
@@ -79,7 +65,18 @@ with open(train_data) as fin:
         if max_lines is not None and lines_count == max_lines:
             break
 
-        scan_line(line, subscribed_users, active_time_scale)
+        obj = json.loads(line.strip())
+
+        uid = obj['userId']
+        if uid not in subscribed_users and 'pluss' in obj['url']:
+            subscribed_users.add(uid)
+
+        if 'activeTime' in obj:
+            active_time = obj['activeTime']
+            min_active_time = active_time_scale.get('min', active_time)
+            max_active_time = active_time_scale.get('max', active_time)
+            active_time_scale['min'] = min(min_active_time, active_time)
+            active_time_scale['max'] = max(max_active_time, active_time)
 
         lines_count += 1
         print('scanning: {} line(s) read, {} subscribed users found.'.
