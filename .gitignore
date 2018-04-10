@@ -15,6 +15,9 @@
 
 # preprocess.py output
 /collaborative.csv
+/articles.csv
+/hits.csv
+# legacy
 /content.csv
 
 # results

@@ -6,7 +6,8 @@ from sys import argv
 
 train_data = 'train_one_week'
 collaborative = 'collaborative.csv'
-content = 'content.csv'
+articles_data = 'articles.csv'
+hits_data = 'hits.csv'
 
 rating_scale = { 'min': 1, 'max': 5 }
 
@@ -51,16 +52,16 @@ def parse_line(line, subscribed_users, active_time_scale, sessions_count,
         active_time = normalize(active_time, active_time_scale, rating_scale)
     event['active_time'] = active_time
 
-    event['keywords'] = obj.get('keywords', None)
-
     return event
 
-print('\n1st pass: scanning (limit:{})'.format(max_lines))
+print('\n1st pass (limit:{})'.format(max_lines))
 subscribed_users = set()
+articles = set()
 active_time_scale = {}
 
 lines_count = 0
-with open(train_data) as fin:
+with open(train_data) as fin, open(articles_data, 'w') as fart:
+    print('item\tcontent', file=fart)
     for line in fin:
         if max_lines is not None and lines_count == max_lines:
             break
@@ -71,6 +72,13 @@ with open(train_data) as fin:
         if uid not in subscribed_users and 'pluss' in obj['url']:
             subscribed_users.add(uid)
 
+        iid = obj.get('id', None)
+        if iid is not None and iid not in articles:
+            keywords = obj.get('keywords', None)
+            if keywords is not None:
+                print('\t'.join([iid, keywords]), file=fart)
+                articles.add(iid)
+
         active_time = obj.get('activeTime', None)
         if active_time is not None:
             min_active_time = active_time_scale.get('min', active_time)
@@ -79,22 +87,22 @@ with open(train_data) as fin:
             active_time_scale['max'] = max(max_active_time, active_time)
 
         lines_count += 1
-        print('scanning: {} line(s) read, {} subscribed users found.'.
-              format(lines_count, len(subscribed_users)), end='\r')
+        print('{} line(s) read, {}@subusers {}@articles'.format(
+            lines_count, len(subscribed_users), len(articles)), end='\r')
 print()
 
-print('\n2nd pass: preprocessing (limit:{})'.format(max_lines))
+print('\n2nd pass (limit:{})'.format(max_lines))
 sessions_count = {}
 sessions = {}
 
 print_coll_count = 0
-print_cont_count = 0
+print_hits_count = 0
 
 lines_count = 0
 with open(train_data) as fin, open(collaborative, 'w') as fcoll, open(
-        content, 'w') as fcont:
+        hits_data, 'w') as fhits:
     print('user\titem\trating', file=fcoll)
-    print('user\titem\tcontent', file=fcont)
+    print('user\titem', file=fhits)
     for line in fin:
         if (max_lines is not None and max_lines == lines_count):
             break
@@ -104,17 +112,15 @@ with open(train_data) as fin, open(collaborative, 'w') as fcoll, open(
         if event is not None:
             iid, uid = event['iid'], event['uid']
             active_time = event['active_time']
-            keywords = event['keywords']
 
             if (active_time is not None):
                 print('\t'.join([uid, iid, str(active_time)]), file=fcoll)
                 print_coll_count += 1
 
-            if (keywords is not None):
-                print('\t'.join([uid, iid, keywords]), file=fcont)
-                print_cont_count += 1
+            print('\t'.join([uid, iid]), file=fhits)
+            print_hits_count += 1
 
         lines_count += 1
-        print('preprocessing: {} line(s) read, {}@coll, {}@cont written.'.
-              format(lines_count, print_coll_count, print_cont_count), end='\r')
+        print('preprocessing: {} line(s) read, {}@coll, {}@hits written.'.
+              format(lines_count, print_coll_count, print_hits_count), end='\r')
     print()
