@@ -46,12 +46,12 @@ def parse_line(line, subscribed_users, active_time_scale, sessions_count,
 
         event['uid'] = sid
 
-    active_time = obj['activeTime'] if 'activeTime' in obj else None
+    active_time = obj.get('activeTime', None)
     if active_time is not None:
         active_time = normalize(active_time, active_time_scale, rating_scale)
     event['active_time'] = active_time
 
-    event['keywords'] = obj['keywords'] if 'keywords' in obj else None
+    event['keywords'] = obj.get('keywords', None)
 
     return event
 
