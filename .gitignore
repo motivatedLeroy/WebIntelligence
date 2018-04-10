@@ -6,7 +6,8 @@
 # light dataset directory
 /one_week
 
-# test dataset
+# datasets
+/train_one_week
 /test_one_week
 
 # rapid miner imported light dataset
