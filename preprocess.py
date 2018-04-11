@@ -5,6 +5,8 @@ import json
 from sys import argv
 
 raw_datasets = sorted(glob.glob('one_week/*'))
+session_map_data = 'session_map.csv'
+article_map_data = 'article_map.csv'
 train_data = 'train_one_week'
 collaborative = 'collaborative.csv'
 articles_data = 'articles.csv'
@@ -46,51 +48,63 @@ for raw_dataset in raw_datasets:
         break
 print()
 
-print('\ncomputing sessions 2/5')
-user_sessions_count = {}
+print('\ncomputing sessions and articleIds 2/5')
+session_count = 0
 active_sessions = {}
 session_user_event_map = {}
-
-unsubusers_count = 0
+article_id_map = {}
+article_count = 0
 
 max_reached = False
 
 lines_count = 0
-for raw_dataset in raw_datasets:
-    with open(raw_dataset) as fin:
-        for line in fin:
-            if max_lines is not None and lines_count == max_lines:
-                max_reached = True
-                break
+with open(session_map_data, 'w') as fsmap, open(article_map_data, 'w') as famap:
+    print('sessionId\tuserId\teventId', file=fsmap)
+    print('articleId\tid', file=famap)
+    for raw_dataset in raw_datasets:
+        with open(raw_dataset) as fin:
+            for line in fin:
+                if max_lines is not None and lines_count == max_lines:
+                    max_reached = True
+                    break
 
-            obj = json.loads(line.strip())
-            uid, eid = obj['userId'], obj['eventId']
-            if uid in subscribed_users:
-                sid = uid
-            else:
-                start, stop = obj['sessionStart'], obj['sessionStop']
-                if start or uid not in active_sessions:
-                    session_count = user_sessions_count.get(uid, 0)
-                    user_sessions_count[uid] = session_count + 1
-                    sid = uid + '#' + str(session_count)
-                    active_sessions[uid] = sid
-                    unsubusers_count += 1
-                else:
+                obj = json.loads(line.strip())
+                uid, eid = obj['userId'], obj['eventId']
+                if uid in subscribed_users:
+                    if uid not in active_sessions:
+                        active_sessions[uid] = session_count
+                        session_count += 1
                     sid = active_sessions[uid]
+                else:
+                    start, stop = obj['sessionStart'], obj['sessionStop']
+                    if start or uid not in active_sessions:
+                        sid = session_count
+                        session_count += 1
+                        active_sessions[uid] = sid
+                    else:
+                        sid = active_sessions[uid]
 
-                if stop:
-                    del active_sessions[uid]
+                    if stop:
+                        del active_sessions[uid]
 
-            if uid not in session_user_event_map:
-                session_user_event_map[uid] = {}
-            session_user_event_map[uid][eid] = sid
+                print('\t'.join([str(sid), uid, str(eid)]), file=fsmap)
+                if uid not in session_user_event_map:
+                    session_user_event_map[uid] = {}
+                session_user_event_map[uid][eid] = sid
 
-            lines_count += 1
-            print('computing: {} line(s) read, {} unsubscribed users'.
-                  format(lines_count, unsubusers_count), end='\r')
-    if max_reached:
-        break
-print()
+                iid = obj.get('id', None)
+                if iid is not None and iid not in article_id_map:
+                    aid = article_count
+                    article_count += 1
+                    print('\t'.join([str(aid), iid]), file=famap)
+                    article_id_map[iid] = aid
+
+                lines_count += 1
+                print('computing: {} line(s) read, {} sessions {} articles'.
+                      format(lines_count, session_count, article_count), end='\r')
+        if max_reached:
+            break
+    print()
 
 print('\nextracting articles & computing active time scale 3/5')
 articles = set()
@@ -109,7 +123,8 @@ with open(train_data) as fin, open(articles_data, 'w') as fart:
         if iid is not None and iid not in articles:
             keywords = obj.get('keywords', None)
             if keywords is not None:
-                print('\t'.join([iid, keywords]), file=fart)
+                aid = article_id_map[iid]
+                print('\t'.join([str(aid), keywords]), file=fart)
                 articles.add(iid)
 
         active_time = obj.get('activeTime', None)
@@ -145,15 +160,16 @@ with open(train_data) as fin, open(collaborative, 'w') as fcoll, open(
         is_news_article = 'id' in obj
         if is_news_article:
             iid = obj['id']
+            aid = article_id_map[iid]
 
             active_time = obj.get('activeTime', None)
             if active_time is not None:
                 active_time = normalize(active_time, active_time_scale,
                                         rating_scale)
-                print('\t'.join([sid, iid, str(active_time)]), file=fcoll)
+                print('\t'.join([str(sid), str(aid), str(active_time)]), file=fcoll)
                 print_coll_count += 1
 
-            print('\t'.join([sid, iid]), file=fhits)
+            print('\t'.join([str(sid), str(aid)]), file=fhits)
             print_hits_count += 1
 
         lines_count += 1
@@ -177,7 +193,8 @@ with open(test_data) as fin, open(test_hits, 'w') as fhits:
         if is_news_article:
             uid, eid, iid = obj['userId'], obj['eventId'], obj['id']
             sid = session_user_event_map[uid][eid]
-            print('\t'.join([sid, iid]), file=fhits)
+            aid = article_id_map[iid]
+            print('\t'.join([str(sid), str(aid)]), file=fhits)
             print_hits_count += 1
 
         lines_count += 1
