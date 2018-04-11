@@ -14,9 +14,12 @@
 /Analysis/Repository/data/Light dataset/**
 
 # preprocess.py output
+/session_map.csv
+/article_map.csv
 /collaborative.csv
 /articles.csv
 /hits.csv
+/test_hits.csv
 # legacy
 /content.csv
 
