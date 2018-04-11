@@ -154,12 +154,10 @@ with open(train_data) as fin, open(collaborative, 'w') as fcoll, open(
 
         obj = json.loads(line.strip())
 
-        uid, eid = obj['userId'], obj['eventId'] # move this down
-        sid = session_user_event_map[uid][eid]
-
         is_news_article = 'id' in obj
         if is_news_article:
-            iid = obj['id']
+            iid, uid, eid = obj['id'], obj['userId'], obj['eventId']
+            sid = session_user_event_map[uid][eid]
             aid = article_id_map[iid]
 
             active_time = obj.get('activeTime', None)
