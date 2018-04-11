@@ -56,9 +56,10 @@ with open(train_data) as fin, open(articles_data, 'w') as fart:
 print()
 
 print('\n2nd pass (limit:{})'.format(max_lines))
-sessions_count = {}
-sessions = {}
+user_sessions_count = {}
+active_sessions = {}
 
+unsubusers_count = 0
 print_coll_count = 0
 print_hits_count = 0
 
@@ -73,37 +74,39 @@ with open(train_data) as fin, open(collaborative, 'w') as fcoll, open(
 
         obj = json.loads(line.strip())
 
+        uid, eid = obj['userId'], obj['eventId']
+        if uid in subscribed_users:
+            sid = uid
+        else:
+            start, stop = obj['sessionStart'], obj['sessionStop']
+            if start or uid not in active_sessions:
+                session_count = user_sessions_count.get(uid, 0)
+                user_sessions_count[uid] = session_count + 1
+                sid = uid + '#' + str(session_count)
+                active_sessions[uid] = sid
+                unsubusers_count += 1
+            else:
+                sid = active_sessions[uid]
+
+            if stop:
+                del active_sessions[uid]
+
         is_news_article = 'id' in obj
         if is_news_article:
             iid = obj['id']
-
-            uid, eid = obj['userId'], obj['eventId']
-
-            if uid not in subscribed_users:
-                start, stop = obj['sessionStart'], obj['sessionStop']
-                if start or uid not in sessions:
-                    sessions_count[uid] = sessions_count.get(uid, 0) + 1
-                    sid = uid + '#' + str(sessions_count[uid])
-                    sessions[uid] = sid
-                else:
-                    sid = sessions[uid]
-
-                if stop:
-                    del sessions[uid]
-
-                uid = sid
 
             active_time = obj.get('activeTime', None)
             if active_time is not None:
                 active_time = normalize(active_time, active_time_scale,
                                         rating_scale)
-                print('\t'.join([uid, iid, str(active_time)]), file=fcoll)
+                print('\t'.join([sid, iid, str(active_time)]), file=fcoll)
                 print_coll_count += 1
 
-            print('\t'.join([uid, iid]), file=fhits)
+            print('\t'.join([sid, iid]), file=fhits)
             print_hits_count += 1
 
         lines_count += 1
-        print('preprocessing: {} line(s) read, {}@coll, {}@hits written.'.
-              format(lines_count, print_coll_count, print_hits_count), end='\r')
+        print('{} line(s) read, {}@unsubusers, {}@coll, {}@hits'.
+              format(lines_count, unsubusers_count, print_coll_count,
+                     print_hits_count), end='\r')
     print()
