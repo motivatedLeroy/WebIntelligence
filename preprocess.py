@@ -18,42 +18,6 @@ def normalize(value, source_scale, target_scale):
             * (target_scale['max'] - target_scale['min'])
             / (source_scale['max'] - source_scale['min']))
 
-def parse_line(line, subscribed_users, active_time_scale, sessions_count,
-               sessions):
-    obj = json.loads(line.strip())
-
-    is_news_article = 'id' in obj
-    if not is_news_article:
-        return None
-
-    iid = obj['id']
-    event = { 'iid': iid }
-
-    uid, eid = obj['userId'], obj['eventId']
-
-    if uid in subscribed_users:
-        event['uid'] = uid
-    else:
-        start, stop = obj['sessionStart'], obj['sessionStop']
-        if start or uid not in sessions:
-            sessions_count[uid] = sessions_count.get(uid, 0) + 1
-            sid = uid + '#' + str(sessions_count[uid])
-            sessions[uid] = sid
-        else:
-            sid = sessions[uid]
-
-        if stop:
-            del sessions[uid]
-
-        event['uid'] = sid
-
-    active_time = obj.get('activeTime', None)
-    if active_time is not None:
-        active_time = normalize(active_time, active_time_scale, rating_scale)
-    event['active_time'] = active_time
-
-    return event
-
 print('\n1st pass (limit:{})'.format(max_lines))
 subscribed_users = set()
 articles = set()
@@ -107,13 +71,32 @@ with open(train_data) as fin, open(collaborative, 'w') as fcoll, open(
         if (max_lines is not None and max_lines == lines_count):
             break
 
-        event = parse_line(line, subscribed_users, active_time_scale,
-                           sessions_count, sessions)
-        if event is not None:
-            iid, uid = event['iid'], event['uid']
-            active_time = event['active_time']
+        obj = json.loads(line.strip())
 
-            if (active_time is not None):
+        is_news_article = 'id' in obj
+        if is_news_article:
+            iid = obj['id']
+
+            uid, eid = obj['userId'], obj['eventId']
+
+            if uid not in subscribed_users:
+                start, stop = obj['sessionStart'], obj['sessionStop']
+                if start or uid not in sessions:
+                    sessions_count[uid] = sessions_count.get(uid, 0) + 1
+                    sid = uid + '#' + str(sessions_count[uid])
+                    sessions[uid] = sid
+                else:
+                    sid = sessions[uid]
+
+                if stop:
+                    del sessions[uid]
+
+                uid = sid
+
+            active_time = obj.get('activeTime', None)
+            if active_time is not None:
+                active_time = normalize(active_time, active_time_scale,
+                                        rating_scale)
                 print('\t'.join([uid, iid, str(active_time)]), file=fcoll)
                 print_coll_count += 1
 
