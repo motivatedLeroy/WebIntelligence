@@ -76,24 +76,35 @@ recommUser = userList[0]
 similarArticles = {}
 sc = 0
 nokeyword = 0
-
+counter = 0
 for user, arts in betterUsers.items():
+    #Nimm einen User
     print("User:  ", user)
+    print(counter)
+    print(len(betterUsers))
     sim_per_user = {}
-    print("Read Articles: ")
+    print("Read Articles: ", len(arts))
+    # durchsuche seine gelesenen artikel
     for a in arts:
+        #Liste für Ähnlichkeit aller anderen Artikel
         sim_per_article = {}
         #print(a)
+        #Wenn ein gelesener Artikel in den ArtikelIDs auftaucht
         if a in articleIds:
+            #Setze Index des gelesen Artikels entsprechden der ArtikelID
             as_i =  articleIds.index(a)
-            print("Article: ", a, "FOUND here:", as_i)
+            #print("Article: ", a, "FOUND here:", as_i)
             #print(len(articleIds), "similaritymatrix: ", len(cosine_sim))
+            #erstelle eine temporäre liste um die similarity des gelesenen artikels (der keywörter hat) mit anderen
+            # Artikeln zu vergleichen
             tmp_sim_list = list(zip(articleIds, cosine_sim[as_i])) #combine sims with articleIDs
             for i in range(len(tmp_sim_list)):
+                #wenn i nicht auf den gelesen artikel zeigt, die similarity größer 0 ist und der verglichene
+                #artikel noch nicht gelesen wurde, addiere die similarity auf
                 if i != as_i and tmp_sim_list[i][1] != 0 and tmp_sim_list[i][0] not in arts:
                     #aufsummieren wenn schon im user
                     if tmp_sim_list[i][0] in sim_per_user.keys():
-                        print("Ich summiere! ", sim_per_user[tmp_sim_list[i][0]], " + ", tmp_sim_list[i][1])
+                        #print("Ich summiere! ", sim_per_user[tmp_sim_list[i][0]], " + ", tmp_sim_list[i][1])
                         new_value = sim_per_user[tmp_sim_list[i][0]] + tmp_sim_list[i][1]
                         sim_per_user[tmp_sim_list[i][0]] = new_value
 
@@ -106,7 +117,13 @@ for user, arts in betterUsers.items():
             nokeyword = nokeyword +1
             #print("Article without keyword found!")
             # sort sim_per_Article per sim and cut the 0s
-    similarArticles[user] = sim_per_user
+    with open('contentbased.txt', 'a') as f:
+            for a, v in sim_per_user.items():
+                # csvwriter.writerow([userID, article, a])
+                if(v > 5):
+                    f.write(user + "," + a + "," + str(v) + "\n")
+    #similarArticles[user] = sim_per_user
+    counter = counter+1
     #print("Result: ", sim_per_user)
     #print("Similarities: ", sim_per_user)
 print("Found Sims: ",sc)
@@ -116,11 +133,17 @@ print("No keywords: ", nokeyword)
 #with open('output.csv', 'w') as f:
     #csvwriter = csv.DictWriter(f, fieldnames=fields)
     #w.writeheader()
-with open('contentbased.txt', 'w') as f:
-    for userID, article in similarArticles.items():
-        for a,v in article.items():
+
+
+
+#with open('contentbased.txt', 'w') as f:
+    #for userID, article in similarArticles.items():
+        #for a,v in article.items():
             #csvwriter.writerow([userID, article, a])
-            f.write(userID+","+a+","+str(v)+"\n")
+            #f.write(userID+","+a+","+str(v)+"\n")
+
+
+
             #print(userID,a,v)
     #for userID, article in similarArticles.items():
     #    for a in article:

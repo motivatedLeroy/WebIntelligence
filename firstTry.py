@@ -17,7 +17,7 @@ output_fname1 = 'dataset1.txt'
 output_fname2 = 'dataset2.txt'
 
 input_fname = '20170101'
-rootPath = os.path.abspath('.')
+rootPath = os.path.abspath('./one_week')
 input_file = rootPath + os.sep + input_fname
 
 time1= datetime.datetime.now()
@@ -42,7 +42,8 @@ print(datetime.datetime.now())
 print(datetime.datetime.now()-time1)
 
 reader = Reader(line_format='user item rating', sep='   ')
-data = Dataset.load_from_file('dataset_file', reader=reader)
+data = Dataset.load_from_file(#'dataset1.txt'
+    'ml-100k' , reader=reader)
 algo = SVD()
 kf = KFold()
 
