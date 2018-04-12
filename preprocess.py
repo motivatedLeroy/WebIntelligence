@@ -2,7 +2,6 @@
 
 import glob
 import json
-from sys import argv
 
 raw_datasets = sorted(glob.glob('one_week/*'))
 session_map_data = 'session_map.csv'
@@ -16,8 +15,6 @@ test_hits = 'test_hits.csv'
 
 rating_scale = { 'min': 1, 'max': 5 }
 
-max_lines = int(argv[1]) if len(argv) > 1 else None
-
 def normalize(value, source_scale, target_scale):
     return (target_scale['min'] + (value - source_scale['min'])
             * (target_scale['max'] - target_scale['min'])
@@ -27,18 +24,12 @@ print('\nscanning subscribed users 1/5')
 session_uid_map = {}
 session_count = 0
 
-max_reached = False
-
 lines_count = 0
 with open(session_map_data, 'w') as fsmap:
     print('sessionId\tuserId', file=fsmap)
     for raw_dataset in raw_datasets:
         with open(raw_dataset) as fin:
             for line in fin:
-                if max_lines is not None and lines_count == max_lines:
-                    max_reached = True
-                    break
-
                 obj = json.loads(line.strip())
                 uid = obj['userId']
                 if uid not in session_uid_map and 'pluss' in obj['url']:
@@ -50,15 +41,11 @@ with open(session_map_data, 'w') as fsmap:
                 lines_count += 1
                 print('scanning: {} line(s) read, {} session ids'.
                       format(lines_count, len(session_uid_map)), end='\r')
-        if max_reached:
-            break
     print()
 
 print('\nscanning articles 2/5')
 article_id_map = {}
 article_count = 0
-
-max_reached = False
 
 lines_count = 0
 with open(article_map_data, 'w') as famap:
@@ -66,10 +53,6 @@ with open(article_map_data, 'w') as famap:
     for raw_dataset in raw_datasets:
         with open(raw_dataset) as fin:
             for line in fin:
-                if max_lines is not None and lines_count == max_lines:
-                    max_reached = True
-                    break
-
                 obj = json.loads(line.strip())
                 uid = obj['userId']
                 if uid in session_uid_map:
@@ -83,8 +66,6 @@ with open(article_map_data, 'w') as famap:
                 lines_count += 1
                 print('scanning: {} line(s) read, {} article ids'.
                       format(lines_count, article_count), end='\r')
-        if max_reached:
-            break
     print()
 
 print('\nextracting articles & computing active time scale 3/5')
@@ -95,9 +76,6 @@ lines_count = 0
 with open(train_data) as fin, open(articles_data, 'w') as fart:
     print('item\tcontent', file=fart)
     for line in fin:
-        if max_lines is not None and lines_count == max_lines:
-            break
-
         obj = json.loads(line.strip())
         uid = obj['userId']
         if uid in session_uid_map:
@@ -131,9 +109,6 @@ with open(train_data) as fin, open(collaborative, 'w') as fcoll, open(
     print('user\titem\trating', file=fcoll)
     print('user\titem', file=fhits)
     for line in fin:
-        if (max_lines is not None and max_lines == lines_count):
-            break
-
         obj = json.loads(line.strip())
 
         is_news_article = 'id' in obj
@@ -165,9 +140,6 @@ lines_count = 0
 with open(test_data) as fin, open(test_hits, 'w') as fhits:
     print('user\titem', file=fhits)
     for line in fin:
-        if (max_lines is not None and max_lines == lines_count):
-            break
-
         obj = json.loads(line.strip())
 
         is_news_article = 'id' in obj
