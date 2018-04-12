@@ -19,7 +19,8 @@ ctr_top20 = 0
 arhr = 0
 arhr_count = 0
 for user_recommendations in recommendations.values():
-    user_recommendations.sort(key=lambda r: float(r['similarity_score']) * float(r['collaborative_score']))
+    user_recommendations.sort(
+        key=lambda r: float(r['similarity_score']) * float(r['collaborative_score']))
     for count, recommendation in enumerate(user_recommendations):
         if recommendation['label'] == '1.0':
             rank = count + 1
