@@ -12,7 +12,7 @@ time1= datetime.datetime.now()
 print(time1)
 print('>>> Start content filtering...')
 #reading the csv files
-with open('sarticles.csv', newline='') as trainFile1, open('shits.csv', newline='') as trainFile2 :
+with open('articles.csv', newline='') as trainFile1, open('hits.csv', newline='') as trainFile2 :
     trainSet1 = csv.reader(trainFile1, delimiter='\t')
     trainSet2 = csv.reader(trainFile2, delimiter='\t')
     articles = list(trainSet1)
