@@ -24,42 +24,44 @@ def normalize(value, source_scale, target_scale):
             / (source_scale['max'] - source_scale['min']))
 
 print('\nscanning subscribed users 1/5')
-subscribed_users = set()
+session_uid_map = {}
+session_count = 0
 
 max_reached = False
 
 lines_count = 0
-for raw_dataset in raw_datasets:
-    with open(raw_dataset) as fin:
-        for line in fin:
-            if max_lines is not None and lines_count == max_lines:
-                max_reached = True
-                break
+with open(session_map_data, 'w') as fsmap:
+    print('sessionId\tuserId', file=fsmap)
+    for raw_dataset in raw_datasets:
+        with open(raw_dataset) as fin:
+            for line in fin:
+                if max_lines is not None and lines_count == max_lines:
+                    max_reached = True
+                    break
 
-            obj = json.loads(line.strip())
-            uid = obj['userId']
-            if uid not in subscribed_users and 'pluss' in obj['url']:
-                subscribed_users.add(uid)
+                obj = json.loads(line.strip())
+                uid = obj['userId']
+                if uid not in session_uid_map and 'pluss' in obj['url']:
+                    sid = session_count
+                    session_count += 1
+                    print('\t'.join([str(sid), uid]), file=fsmap)
+                    session_uid_map[uid] = sid
 
-            lines_count += 1
-            print('scanning: {} line(s) read, {} subscribed users'.
-                  format(lines_count, len(subscribed_users)), end='\r')
-    if max_reached:
-        break
-print()
+                lines_count += 1
+                print('scanning: {} line(s) read, {} session ids'.
+                      format(lines_count, len(session_uid_map)), end='\r')
+        if max_reached:
+            break
+    print()
 
-print('\ncomputing sessions and articleIds 2/5')
-session_count = 0
-active_sessions = {}
-session_user_event_map = {}
+print('\nscanning articles 2/5')
 article_id_map = {}
 article_count = 0
 
 max_reached = False
 
 lines_count = 0
-with open(session_map_data, 'w') as fsmap, open(article_map_data, 'w') as famap:
-    print('sessionId\tuserId\teventId', file=fsmap)
+with open(article_map_data, 'w') as famap:
     print('articleId\tid', file=famap)
     for raw_dataset in raw_datasets:
         with open(raw_dataset) as fin:
@@ -69,39 +71,18 @@ with open(session_map_data, 'w') as fsmap, open(article_map_data, 'w') as famap:
                     break
 
                 obj = json.loads(line.strip())
-                uid, eid = obj['userId'], obj['eventId']
-                if uid in subscribed_users:
-                    if uid not in active_sessions:
-                        active_sessions[uid] = session_count
-                        session_count += 1
-                    sid = active_sessions[uid]
-                else:
-                    start, stop = obj['sessionStart'], obj['sessionStop']
-                    if start or uid not in active_sessions:
-                        sid = session_count
-                        session_count += 1
-                        active_sessions[uid] = sid
-                    else:
-                        sid = active_sessions[uid]
-
-                    if stop:
-                        del active_sessions[uid]
-
-                print('\t'.join([str(sid), uid, str(eid)]), file=fsmap)
-                if uid not in session_user_event_map:
-                    session_user_event_map[uid] = {}
-                session_user_event_map[uid][eid] = sid
-
-                iid = obj.get('id', None)
-                if iid is not None and iid not in article_id_map:
-                    aid = article_count
-                    article_count += 1
-                    print('\t'.join([str(aid), iid]), file=famap)
-                    article_id_map[iid] = aid
+                uid = obj['userId']
+                if uid in session_uid_map:
+                    iid = obj.get('id', None)
+                    if iid is not None and iid not in article_id_map:
+                        aid = article_count
+                        article_count += 1
+                        print('\t'.join([str(aid), iid]), file=famap)
+                        article_id_map[iid] = aid
 
                 lines_count += 1
-                print('computing: {} line(s) read, {} sessions {} articles'.
-                      format(lines_count, session_count, article_count), end='\r')
+                print('scanning: {} line(s) read, {} article ids'.
+                      format(lines_count, article_count), end='\r')
         if max_reached:
             break
     print()
@@ -118,21 +99,22 @@ with open(train_data) as fin, open(articles_data, 'w') as fart:
             break
 
         obj = json.loads(line.strip())
+        uid = obj['userId']
+        if uid in session_uid_map:
+            iid = obj.get('id', None)
+            if iid is not None and iid not in articles:
+                keywords = obj.get('keywords', None)
+                if keywords is not None:
+                    aid = article_id_map[iid]
+                    print('\t'.join([str(aid), keywords]), file=fart)
+                    articles.add(iid)
 
-        iid = obj.get('id', None)
-        if iid is not None and iid not in articles:
-            keywords = obj.get('keywords', None)
-            if keywords is not None:
-                aid = article_id_map[iid]
-                print('\t'.join([str(aid), keywords]), file=fart)
-                articles.add(iid)
-
-        active_time = obj.get('activeTime', None)
-        if active_time is not None:
-            min_active_time = active_time_scale.get('min', active_time)
-            max_active_time = active_time_scale.get('max', active_time)
-            active_time_scale['min'] = min(min_active_time, active_time)
-            active_time_scale['max'] = max(max_active_time, active_time)
+            active_time = obj.get('activeTime', None)
+            if active_time is not None:
+                min_active_time = active_time_scale.get('min', active_time)
+                max_active_time = active_time_scale.get('max', active_time)
+                active_time_scale['min'] = min(min_active_time, active_time)
+                active_time_scale['max'] = max(max_active_time, active_time)
 
         lines_count += 1
         print('extracting: {} line(s) read, {} articles'.format(
@@ -155,9 +137,10 @@ with open(train_data) as fin, open(collaborative, 'w') as fcoll, open(
         obj = json.loads(line.strip())
 
         is_news_article = 'id' in obj
-        if is_news_article:
-            iid, uid, eid = obj['id'], obj['userId'], obj['eventId']
-            sid = session_user_event_map[uid][eid]
+        uid = obj['userId']
+        if is_news_article and uid in session_uid_map:
+            iid = obj['id']
+            sid = session_uid_map[uid]
             aid = article_id_map[iid]
 
             active_time = obj.get('activeTime', None)
@@ -188,10 +171,12 @@ with open(test_data) as fin, open(test_hits, 'w') as fhits:
         obj = json.loads(line.strip())
 
         is_news_article = 'id' in obj
-        if is_news_article:
-            uid, eid, iid = obj['userId'], obj['eventId'], obj['id']
-            sid = session_user_event_map[uid][eid]
+        uid = obj['userId']
+        if is_news_article and uid in session_uid_map:
+            iid = obj['id']
+            sid = session_uid_map[uid]
             aid = article_id_map[iid]
+
             print('\t'.join([str(sid), str(aid)]), file=fhits)
             print_hits_count += 1
 
