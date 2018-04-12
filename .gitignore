@@ -3,10 +3,8 @@
 \#*\#
 .\#*
 
-# light dataset directory
-/one_week
-
 # datasets
+/one_week
 /train_one_week
 /test_one_week
 
@@ -20,8 +18,3 @@
 /articles.csv
 /hits.csv
 /test_hits.csv
-# legacy
-/content.csv
-
-# results
-/results
